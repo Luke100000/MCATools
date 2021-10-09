@@ -44,6 +44,7 @@ function recRem(p)
 end
 
 recRem("output")
+recRem("outputMinecraft")
 
 --load old source langs
 local sourceLang = { }
@@ -93,6 +94,12 @@ for _,language in pairs(love.filesystem.getDirectoryItems("translations")) do
 			if old[key] and old[key] ~= v then
 				new[i] = old[key]
 				found = found + 1
+			elseif old[i] and old[i] ~= v then
+				--even tho the key has been renamed, the translation already uses the new one
+				new[i] = old[i]
+				found = found + 1
+			elseif language == "de" then
+				print(key)
 			end
 		end
 		love.filesystem.write("output/" .. language .. "/" .. file, json.encode(new))
@@ -101,6 +108,20 @@ for _,language in pairs(love.filesystem.getDirectoryItems("translations")) do
 	print(string.format("%s\t%d%% reused", language, found / total * 100))
 end
 
-love.system.openURL(love.filesystem.getSaveDirectory() .. "/output")
+--also provide a minecraft-friendly format
+local mapping = json.decode(love.filesystem.read("mapping.json"))
+love.filesystem.createDirectory("outputMinecraft")
+for _,language in pairs(love.filesystem.getDirectoryItems("output")) do
+	for _,file in pairs(love.filesystem.getDirectoryItems("output/" .. language)) do
+		local m = mapping[file] or file:sub(1, -6)
+		local locale = #language == 2 and (language .. "_" .. language) or language
+		local d = love.filesystem.read("output/" .. language .. "/" .. file)
+		love.filesystem.createDirectory("outputMinecraft/" .. m)
+		love.filesystem.createDirectory("outputMinecraft/" .. m .. "/lang")
+		love.filesystem.write("outputMinecraft/" .. m .. "/lang/" .. locale:lower():gsub("-", "_") .. ".json", d)
+	end
+end
+
+love.system.openURL(love.filesystem.getSaveDirectory())
 
 os.exit()
