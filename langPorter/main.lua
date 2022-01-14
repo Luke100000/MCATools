@@ -98,14 +98,18 @@ for _,language in pairs(love.filesystem.getDirectoryItems("translations")) do
 				--even tho the key has been renamed, the translation already uses the new one
 				new[i] = old[i]
 				found = found + 1
-			elseif language == "de" then
-				print(key)
 			end
 		end
-		love.filesystem.write("output/" .. language .. "/" .. file, json.encode(new))
+		local d = { }
+		for i, v in pairs(new) do
+			table.insert(d, '	"' .. i .. '": ' .. json.encode_string(v))
+		end
+		table.sort(d)
+		d = "{\n" .. table.concat(d, ",\n") .. "\n}"
+		love.filesystem.write("output/" .. language .. "/" .. file, d)
 	end
 	
-	print(string.format("%s\t%d%% reused", language, found / total * 100))
+	print(string.format("%s\t%d%% translated", language, found / total * 100))
 end
 
 --also provide a minecraft-friendly format
