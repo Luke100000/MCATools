@@ -34,7 +34,7 @@ end
 
 --delete old exports
 function recRem(p)
-	for d,s in ipairs(love.filesystem.getDirectoryItems(p)) do
+	for _,s in ipairs(love.filesystem.getDirectoryItems(p)) do
 		if love.filesystem.getInfo(p .. "/" .. s, "directory") then
 			recRem(p .. "/" .. s)
 		else
@@ -88,7 +88,7 @@ for _,language in pairs(love.filesystem.getDirectoryItems("translations")) do
 	local found = 0
 	love.filesystem.createDirectory("output/" .. language)
 	for file,target in pairs(targetLang) do
-		new = { }
+		local new = { }
 		for i,v in pairs(target) do
 			local key = renames[i] or i
 			if old[key] and old[key] ~= v then
@@ -100,13 +100,25 @@ for _,language in pairs(love.filesystem.getDirectoryItems("translations")) do
 				found = found + 1
 			end
 		end
+		
+		--relict from the past
+		new["_comment"] = nil
+		
+		--port variables
+		for i,_ in pairs(new) do
+			for index = 1, 10 do
+				new[i] = new[i]:gsub("%%v" .. index .. "%%", "%%" .. index .. "$s")
+			end
+		end
+		
 		local d = { }
 		for i, v in pairs(new) do
 			table.insert(d, '	"' .. i .. '": ' .. json.encode_string(v))
 		end
 		table.sort(d)
-		d = "{\n" .. table.concat(d, ",\n") .. "\n}"
-		love.filesystem.write("output/" .. language .. "/" .. file, d)
+		
+		local str = "{\n" .. table.concat(d, ",\n") .. "\n}"
+		love.filesystem.write("output/" .. language .. "/" .. file, str)
 	end
 	
 	print(string.format("%s\t%d%% translated", language, found / total * 100))
