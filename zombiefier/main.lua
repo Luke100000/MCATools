@@ -43,7 +43,7 @@ shaderTorn:send("mask", mask)
 shaderMoss:send("mask", moss)
 
 --converts a given image and returns a rendered canvas
-function convert(img)
+function convert(img, seed)
 	local canvas = love.graphics.newCanvas(64, 64)
 	
 	love.graphics.push("all")
@@ -55,7 +55,9 @@ function convert(img)
 	
 	--mossy
 	love.graphics.setShader(shaderMoss)
-	shaderMoss:send("offset", {math.random(), math.random()})
+	local hash = {string.byte(love.data.hash("md5", seed), 1, 4)}
+	local r = hash[1] / 256^4 + hash[2] / 256^3 + hash[3] / 256^2 + hash[4] / 256^1
+	shaderMoss:send("offset", {r, r})
 	love.graphics.draw(img)
 	
 	love.graphics.pop()
@@ -66,7 +68,7 @@ end
 local results = { }
 for d,s in ipairs(paths) do
 	local img = love.graphics.newImage(s)
-	local canvas = convert(img)
+	local canvas = convert(img, s)
 	table.insert(results, {canvas, img})
 	love.filesystem.createDirectory(("export/" .. s):match("(.*[/\\])"))
 	canvas:newImageData():encode("png", "export/" .. s)
